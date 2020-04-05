@@ -97,7 +97,8 @@ var pF_remove_keyword = remove_keyword;
       <script>
       jQuery( document ).ready(
         function() { 
-          jQuery(".chosen-add-keywords").chosen({ width: "75%", allow_single_deselect: true }); 
+          jQuery(".chosen-add-keywords").chosen({ width: "75%", allow_single_deselect: true }).css(
+                  {minWidth : "300px",maxWidth: "300px"});
         }
       );
       </script>  
