@@ -133,9 +133,22 @@ function doAuthorize(&$db,$login,$pwd,$options=null) {
     }  
 
     if( $forceUserCreation ) {
+      // first & last name are mandatory
+      $user->firstName = trim($user->firstName);
+      $user->lastName = trim($user->lastName);
+      $porsi = explode('@',$user->emailAddress);
+
+      if ($user->firstName == '') {
+        $user->firstName = 'DynGen ' . trim($porsi[0]);
+      }
+      if ($user->lastName == '') {
+        $user->lastName = 'DynGen ' . trim($porsi[1]);
+      }
+
       // Anyway, write a password on the DB.
-      $fake = 'the quick brown fox jumps over the lazy dog';
-      $user->setPassword( $fake );  
+      $fake = md5('the quick brown fox jumps over the lazy dog');
+      $fake = md5(md5($fake));
+      $user->setPassword($fake);  
       $doLogin = ($user->writeToDB($db) == tl::OK);
     }
 
@@ -171,8 +184,10 @@ function doAuthorize(&$db,$login,$pwd,$options=null) {
     tlSetCookie($ckObj);
 
     // Disallow two sessions within one browser
-    if ($options->doSessionExistsCheck && 
-        isset($_SESSION['currentUser']) && !is_null($_SESSION['currentUser'])) {
+    if (property_exists($options,'doSessionExistsCheck')
+        && $options->doSessionExistsCheck 
+        && isset($_SESSION['currentUser']) 
+        && !is_null($_SESSION['currentUser'])) {
       $result['msg'] = lang_get('login_msg_session_exists1') . 
                        ' <a style="color:white;" href="logout.php">' . 
                        lang_get('logout_link') . '</a>' . lang_get('login_msg_session_exists2');

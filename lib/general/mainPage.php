@@ -23,12 +23,12 @@ $smarty = new TLSmarty();
 $tproject_mgr = new testproject($db);
 $user = $_SESSION['currentUser'];
 
-
-$testprojectID = isset($_SESSION['testprojectID']) ? intval($_SESSION['testprojectID']) : 0;
+$testprojectID = 
+isset($_SESSION['testprojectID']) 
+? intval($_SESSION['testprojectID']) : 0;
 
 if( isset($_REQUEST['testplan']) ) {
   $testplanID = $_REQUEST['testplan'];
-
 } else {
   $testplanID = isset($_SESSION['testplanID']) ? $_SESSION['testplanID'] : 0;
 }
@@ -247,6 +247,7 @@ function getGrants($dbHandler,$user,$tproject_id,$forceToNo=false)
           'keyword_assignment' => "keyword_assignment",
           'keywords_edit' => "mgt_modify_key",
           'platform_management' => "platform_management",
+          'platform_view' => "platform_view",
           'issuetracker_management' => "issuetracker_management",
           'issuetracker_view' => "issuetracker_view",
           'codetracker_management' => "codetracker_management",

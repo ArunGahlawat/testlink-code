@@ -323,9 +323,10 @@ function initTopMenu(&$db)
     foreach ($guiTopMenu as $element)
     {
       // check if Test Plan is available
+      $testPlanID = (isset($_SESSION['testplanID']) && $_SESSION['testplanID'] > 0) ? $_SESSION['testplanID'] : null;
       if ((!isset($element['condition'])) || ($element['condition'] == '') ||
         (($element['condition'] == 'TestPlanAvailable') && 
-          isset($_SESSION['testplanID']) && $_SESSION['testplanID'] > 0) ||
+         !is_null($testPlanID)) ||
         (($element['condition'] == 'ReqMgmtEnabled') && 
           isset($_SESSION['testprojectOptions']->requirementsEnabled) && 
             $_SESSION['testprojectOptions']->requirementsEnabled))
@@ -339,7 +340,7 @@ function initTopMenu(&$db)
           {
             foreach($element['right'] as $rg)
             {
-              if( $addItem = (has_rights($db,$rg) == "yes") )
+              if( $addItem = (has_rights($db,$rg, $_SESSION['testprojectID'], $testPlanID) == "yes") )
               {
                 break;
               }   
@@ -347,24 +348,25 @@ function initTopMenu(&$db)
           } 
           else
           {
-            $addItem = (has_rights($db,$element['right']) == "yes");   
+            $addItem = (has_rights($db,$element['right'], $_SESSION['testprojectID'], $testPlanID) == "yes");
           } 
         } 
 
         if( $addItem )
         {
           $_SESSION['testprojectTopMenu'] .= "<a href='{$element['url']}' " .
-          "target='{$element['target']}' accesskey='{$element['shortcut']}'" .
-          "tabindex=''" . $idx++ . "''>";
+          "target='{$element['target']}' accesskey='{$element['shortcut']}' " .
+          "tabindex='" . $idx++ . "'>";
 
           if( isset($element['imgKey']) )
           {
            $_SESSION['testprojectTopMenu'] .= '<img src="' . $imageSet[$element['imgKey']] . '"' .
-                                              ' title="' . lang_get($element['label']) . '">'; 
+             ' title="' . lang_get($element['label']) . '">'; 
           }  
           else
           {
-           $_SESSION['testprojectTopMenu'] .= lang_get($element['label']); 
+           $_SESSION['testprojectTopMenu'] .= 
+             lang_get($element['label']); 
           }  
 
           $_SESSION['testprojectTopMenu'] .= "</a>&nbsp;&nbsp;&nbsp;";
@@ -475,7 +477,8 @@ function testlinkInitPage(&$db, $initProject = FALSE,
 
   doSessionStart();
   setPaths();
-  if( isset($_SESSION['locale']) && !is_null($_SESSION['locale']) ) {
+  if( isset($_SESSION['locale']) 
+      && !is_null($_SESSION['locale']) ) {
     setDateTimeFormats($_SESSION['locale']);
   } 
   doDBConnect($db);
@@ -2138,4 +2141,21 @@ function pageAccessCheck(&$db, &$user, $context)
     logAuditEvent($msg, $action,$user->dbID,"users");
     throw new Exception($msg, 1);
   }
+}
+
+/**
+ *
+ */
+function XSS_StringScriptSafe($content) 
+{
+  $needle = [];
+  $needle[] = "<script";
+  $needle[] = "< s c r i p t";
+
+  foreach ($needle as $ne) {
+    if (stripos($content, $ne) !== FALSE) {
+      return false;
+    }
+  }
+  return true;
 }

@@ -260,8 +260,31 @@ viewer for test case in test specification
              {/if}
           {/if}
 
+          {* activate/desactivate TC version *}
+          {if $args_can_do->edit == "yes" 
+              && $args_can_do->deactivate=='yes' 
+              && $args_frozen_version=="no"}
+
+              {$act_deact_btn="activate_this_tcversion"}
+              {$act_deact_value="activate_this_tcversion"}
+              {$version_title_class="inactivate_version"}
+              
+              {if $args_testcase.active eq 1}
+                {$prex = "de"}
+                {$act_deact_btn = "$prex$act_deact_btn"}
+                {$act_deact_value = "$prex$act_deact_value"}
+                {$version_title_class = "activate_version"}
+              {/if}
+
+              <input type="submit" name="{$act_deact_btn}"
+                       value="{lang_get s=$act_deact_value}" />
+          {/if}
+
+
+
         	{* freeze/unfreeze TC version *}
-        	{if 'editOnExec' != $gui->show_mode && $args_read_only != "yes" 
+        	{if 'editOnExec' != $gui->show_mode 
+              && $args_read_only != "yes" 
               && $args_can_do->freeze=='yes'}
         		  {if $args_frozen_version=="yes"}
         			  {$freeze_btn="unfreeze"}
@@ -503,13 +526,16 @@ viewer for test case in test specification
 {if $gui->requirementsEnabled == TRUE && 
   ($gui->view_req_rights == "yes" || $gui->req_tcase_link_management) }
   {$reqLinkingEnabled = 0}
-  {if $gui->req_tcase_link_management && $args_frozen_version=="no" &&
-         $edit_enabled == 1 }
+  {if $gui->req_tcase_link_management 
+      && $args_frozen_version == "no"
+      && $args_testcase.active == 1 
+      && $edit_enabled == 1 }
          {$reqLinkingEnabled = 1}
   {/if}    
 
-  {if $tlCfg->testcase_cfg->reqLinkingDisabledAfterExec == 1 && 
-       $has_been_executed == 1 && $args_tcase_cfg->can_edit_executed == 0}
+  {if $tlCfg->testcase_cfg->reqLinkingDisabledAfterExec == 1 
+      && $has_been_executed == 1 
+      && $args_tcase_cfg->can_edit_executed == 0}
        {$reqLinkingEnabled = 0}
   {/if}
   <div {$addInfoDivStyle} class="additionalInfoViewer">

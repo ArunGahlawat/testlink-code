@@ -1104,8 +1104,16 @@ function create_tc_from_requirement($mixIdReq,$srs_id, $user_id, $tproject_id = 
 
     $output = 0;
     $now = $this->db->db_now();
-    if($testcase_id && $req_id) {
+    if ($testcase_id && $req_id) {
+      // Get Latest Active Test Case Version 
+      $tcv = current($tcMgr->get_last_active_version($testcase_id));
+      if ($tcv == null) {
+        return $output;
+      }
+    }
 
+    // Go ahead
+    if ($testcase_id && $req_id) {
       // Need to get latest version for each requirement
       $reqIDSet = (array)$req_id;
       $gopt = array('output' => 'id,version');
@@ -1118,8 +1126,6 @@ function create_tc_from_requirement($mixIdReq,$srs_id, $user_id, $tproject_id = 
         $reqLatestVersionNumberSet[] = $isofix['version'];
       }
 
-      // Get Latest Active Test Case Version 
-      $tcv = current($tcMgr->get_last_active_version($testcase_id));
       $ltcv = $tcv['tcversion_id'];
       $ltcvNum = $tcv['version'];
       $in_clause = implode(",",$reqLatestVersionIDSet);
@@ -1161,9 +1167,7 @@ function create_tc_from_requirement($mixIdReq,$srs_id, $user_id, $tproject_id = 
                             "ASSIGN",$this->object_table);
             }                 
           }
-        }    
-        else
-        {
+        } else {
           $output = 1;
         }
       }
@@ -1292,7 +1296,8 @@ function set_order($map_id_order)
  *
  * @param  int $id requirement id
  * @param  int $tproject_id: optional default null.
- *         useful to get custom fields (when this feature will be developed).
+ *         useful to get custom fields 
+ *         (when this feature will be developed).
  *
  * @return  string with XML code
  *
@@ -1301,6 +1306,7 @@ function exportReqToXML($id,$tproject_id=null, $inc_attachments=false)
 {
   $req = $this->get_by_id($id,requirement_mgr::LATEST_VERSION);
   $reqData[] = $req[0]; 
+  $req_version_id = $req[0]['version_id'];
 
   $elemTpl = "\t" .   "<requirement>" .
              "\n\t\t" . "<docid><![CDATA[||DOCID||]]></docid>" .
@@ -1315,19 +1321,20 @@ function exportReqToXML($id,$tproject_id=null, $inc_attachments=false)
              "\n\t\t" . $this->customFieldValuesAsXML($id,$req[0]['version_id'],$tproject_id);
 			 
   // add req attachment content if checked in GUI
-  if ($inc_attachments)
-  {
-	$attachments=null;
-	// retrieve all attachments linked to req
-	$attachmentInfos = $this->attachmentRepository->getAttachmentInfosFor($id,$this->attachmentTableName,'id');
-	  
+  if ($inc_attachments) {
+  	$attachments = null;
+
+    // id -> req_id, but I need latest req_versionid
+  	$attachSet = $this->attachmentRepository
+                      ->getAttachmentInfosFor(
+                        $req_version_id,
+                        $this->attachmentTableName,'id');
 	// get all attachments content and encode it in base64	  
-	if ($attachmentInfos)
-	{
-		foreach ($attachmentInfos as $attachmentInfo)
-		{
+	if ($attachSet) {
+		foreach ($attachSet as $attachmentInfo) {
 			$aID = $attachmentInfo["id"];
-			$content = $this->attachmentRepository->getAttachmentContent($aID, $attachmentInfo);
+			$content = $this->attachmentRepository
+                      ->getAttachmentContent($aID, $attachmentInfo);
 			
 			if ($content != null)
 			{
